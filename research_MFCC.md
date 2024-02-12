@@ -15,7 +15,7 @@ __Overview__
 3. Frame the Signal
         Create overlapping segments (overlapping reduces artifacting?)
 4. Apply a Window Function - Like hamming
-        Each frame gets "windowed" by multiplying it with a window function
+        Each frame gets "windowed" by multiplying it with a window function  
 	    Overlapping windows is almost required. Beneficial when used DTW
 	    and/because it preserves temporal information
 5. Apply FFT to each windowed frame
