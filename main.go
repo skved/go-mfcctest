@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"os"
 
+	// "strings"
+
+	// Temporary for testing output to file through string builder. Remove when done.
 	"github.com/go-audio/wav"
 	//"golang.org/x/exp/slices" // Import? or just manually do it?
-	//"gonum.org/v1/gonum/dsp/window" // "gonum
+	"gonum.org/v1/gonum/dsp/fourier" // "gonum"
+	"gonum.org/v1/gonum/dsp/window"  // "gonum
 )
 
 // Load audio file
@@ -137,10 +141,97 @@ func main() {
 
 	// frames := slices.Slice(signal64, 1323, 1323) // "slices"
 
+	frames := make([][]float64, int(numFrames))
+	for i := 0; i < int(numFrames); i++ {
+		start := i * frameStep
+		end := start + frameSize
+		if end > len(signal64) {
+			end = len(signal64)
+		}
+		frames[i] = signal64[start:end]
+	}
+	///////////////////////////////////////////////////////////////////////
+	// Testing Output to File to use in online array visualizer
+	// Convert the slice of slices to a string representation
+	// var sb strings.Builder
+	// for _, row := range frames {
+	// 	//fmt.Fprintf(&sb, "%v\n", row)
+	// 	fmt.Fprintf(&sb, "%s\n", strings.Trim(strings.Join(strings.Fields(fmt.Sprint(row)), ","), "[]"))
+	// }
+	// data := sb.String()
+
+	// os.WriteFile("frames.txt", []byte(fmt.Sprint(data)), 0644)
+	// fmt.Println("Finished Writing to File")
+	///////////////////////////////////////////////////////////////////////
+	// Count the samples per frame then add them all up and make sure they equal the starting length of the signal.
+	// var count int
+	// for i := 0; i < len(frames); i++ {
+	// 	// fmt.Println(len(frames[i]))
+	// 	count += len(frames[i])
+	// 	if i == len(frames)-2 {
+	// 		fmt.Println("Count: ", count)
+	// 		fmt.Println("2ndtolast: ", len(frames[i]))
+	// 	}
+	// 	if i == len(frames)-1 {
+	// 		fmt.Println("Count: ", count)
+	// 		fmt.Println("lastframe: ", len(frames[i]))
+	// 	}
+	// 	// Print the first overlap index of each frame
+	// 	if i != 0 {
+	// 		fmt.Println("Previous Frame: ", frames[i-1][660:663])
+	// 		fmt.Println("Current Frame : ", frames[i][0:3])
+	// 	}
+	///////////////////////////////////////////////////////////////////////
+	// Check to see if the last frames align. Hopefully this means that I've gathered all the data correctly.
+	// fmt.Println(len(frames))
+	// fmt.Println(frames[796][1257])
+	// fmt.Println(signal64[len(signal64)-1])
+	///////////////////////////////////////////////////////////////////////
+
 	// End Framing the Signal
 	// Start Windowing the Signal (Hamming Window)
 	// https://pkg.go.dev/gonum.org/v1/gonum/dsp/window#example-Hamming
+	// I believe the windowing function is applied inplace, so I need to create the slice of slices beforehand otherwise the windowing would change the values, which is a problem since there is going to be overlap and the values will need to be resued for multiple frames and we don't want it to get "windowed" multiple times?
+
+	// Have to copy the frames because I need both the original and windowed frames for the FFT.
+
+	goingHam := make([][]float64, len(frames))
+	for i := 0; i < len(frames); i++ {
+		goingHam[i] = append(goingHam[i], frames[i]...)
+	}
+
+	// Maybe run a quick test to see if they are equivalent, then remove it.
+	// eg, for i in range, if frames[i] == goingHam[i] then print "same" else print "different"
+	// HAVE NOT YET RUN THIS TEST
+
+	for i := 0; i < len(goingHam); i++ {
+		window.Hamming(goingHam[i]) // Changes data in place according to documentation
+	}
+	// Now the overlap-add step. https://en.wikipedia.org/wiki/Overlap%E2%80%93add_method
+	// recombining the frames accounting for the overlap.
+
+	// - FFT then overlap-add
+	// - Overlap-add method
+	// There doesn't seem to be a library for this, so, like framing, do it manually.
+	// -
+
+	// So even though the slice of slices are independent from each other and so there isn't an issue with the windowing function changing the values of the other frames, I still need to account for the overlap?
 
 	// End Windowing the Signal
+
+	// The DCT (or mdct) happens last
+
+	// The FFT returns complex numbers, but Do I need a complex input?
+
+	complexFrames := make([][]complex128, len(frames))
+	fft := fourier.NewFFT(len(frames))
+	for i := 0; i < len(frames); i++ {
+		complexFrames[i] = make([]complex128, len(frames[i]))
+		for j := 0; j < len(frames[i]); j++ {
+			complexFrames[i][j] = complex(frames[i][j], 0)
+		}
+		fft.Coefficients(complexFrames[i], goingHam[i]) // The first argument should be the signal before windowing. The second argument is the windowed bit.
+		// This means I have to go back to the windowing and do it without changing the original signal.
+	}
 
 }
