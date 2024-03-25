@@ -329,10 +329,19 @@ func main() {
 		for j := 0; j < len(powerSpectrum[i]); j++ { // Index of values
 			for k := 0; k < len(triangularkernel); k++ { // Index of kernel
 				weightedOutput[i][j] += paddedSpectrum[i][j+k] * triangularkernel[k]
+
 			}
 		}
 	}
-	fmt.Println(weightedOutput[0])
+
+	// End Triangular Filtering
+	// Take Log // Turn into decibels??
+
+	for i := 0; i < len(weightedOutput); i++ {
+		for j := 0; j < len(weightedOutput[i]); j++ {
+			weightedOutput[i][j] = math.Log(weightedOutput[i][j])
+		}
+	}
 
 }
 
@@ -340,3 +349,4 @@ func main() {
 // Dynamic vs Static Framing
 // Discard half of the FFT? Only compute the first half of the FFT? Only the first half contains unique information?
 // filterbank/more filters? Frequency bins is huh?
+// Do i multiply the Log of the energies by 10? or is it fine?
