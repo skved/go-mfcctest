@@ -349,6 +349,7 @@ func main() {
 	dctCoefficients := make([][]float64, len(weightedOutput))
 
 	for i := 0; i < len(weightedOutput); i++ {
+		dctCoefficients[i] = make([]float64, len(weightedOutput[i]))
 		dct := fourier.NewDCT(len(weightedOutput[i]))
 		dct.Transform(dctCoefficients[i], weightedOutput[i])
 		//dctCoeffcients[i] = dct.Transform(nil, weightedOutput[i])
