@@ -342,6 +342,19 @@ func main() {
 			weightedOutput[i][j] = math.Log(weightedOutput[i][j])
 		}
 	}
+	// End Take Log
+
+	// Start DCT - Discrete Cosine Transform
+	// https://pkg.go.dev/gonum.org/v1/gonum@v0.14.0/dsp/fourier#DCT
+	dctCoefficients := make([][]float64, len(weightedOutput))
+
+	for i := 0; i < len(weightedOutput); i++ {
+		dct := fourier.NewDCT(len(weightedOutput[i]))
+		dct.Transform(dctCoefficients[i], weightedOutput[i])
+		//dctCoeffcients[i] = dct.Transform(nil, weightedOutput[i])
+
+	}
+	// End DCT
 
 }
 
